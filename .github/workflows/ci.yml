@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  source-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: No oversize binaries committed
+        run: |
+          set -euo pipefail
+          found="$(find . -type f -size +95M -not -path './.git/*' | head || true)"
+          if [[ -n "$found" ]]; then
+            echo "Files over GitHub soft limit:"
+            echo "$found"
+            exit 1
+          fi
+          if find native -type f \( -name '*.so' -o -name '*.dylib' -o -name '*.dll' \) 2>/dev/null | grep -q .; then
+            echo "Native libraries must not be committed"
+            find native -type f \( -name '*.so' -o -name '*.dylib' -o -name '*.dll' \)
+            exit 1
+          fi
+          echo "source-check ok"
+
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+
+      - name: Pub get
+        run: dart pub get
+
+      - name: Analyze
+        run: dart analyze --fatal-infos
+
+      - name: Fetch release assets (host native)
+        env:
+          CORTEXT_ASSETS_VERSION: "1.2.4"
+        run: |
+          set -euo pipefail
+          DEST="${RUNNER_TEMP}/cortext-assets"
+          ./scripts/fetch_assets.sh "$DEST"
+          echo "CORTEXT_ASSETS_DIR=$DEST" >> "$GITHUB_ENV"
+
+      - name: Test
+        run: dart test

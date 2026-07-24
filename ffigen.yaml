@@ -1,0 +1,24 @@
+name: CortextBindings
+description: Generated bindings for the Cortext C API.
+output: lib/src/cortext_bindings.dart
+exclude-all-by-default: true
+# Regenerate with a local engine checkout at ../cortext (or set paths below):
+#   dart run ffigen --config ffigen.yaml
+headers:
+  entry-points:
+    - ../cortext/include/cortext/capi.h
+compiler-opts:
+  - -I../cortext/include
+comments:
+  style: any
+functions:
+  include:
+    - cortext_.*
+structs:
+  include:
+    - cortext_config
+    - cortext_media
+    - cortext_process_json_options
+typedefs:
+  include:
+    - cortext_handle

@@ -1,0 +1,31 @@
+# Dart / pub
+.dart_tool/
+.packages
+.pub/
+pubspec.lock
+build/
+doc/api/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+.DS_Store
+
+# Natives (vendor locally / CI; do not commit binaries)
+/native/**/*.so
+/native/**/*.dylib
+/native/**/*.dll
+/native/**/*.node
+*.so
+*.dylib
+*.dll
+
+# Downloaded or local asset trees
+.cortext-assets/
+/models/
+**/AIST-87M-GGUF/AIST-87M_q8_0.gguf
+**/AIST-87M-GGUF/AIST-87M_q5_1.gguf
+
+# Coverage
+coverage/
