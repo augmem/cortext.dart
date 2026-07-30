@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Download and unpack augmem/cortext release assets for offline / CI use.
+# Download and unpack augmem/cortext.cpp release assets for offline / CI use.
 set -euo pipefail
 
 VERSION="${CORTEXT_ASSETS_VERSION:-1.2.4}"
@@ -12,7 +12,7 @@ if [[ -z "${DEST}" ]]; then
     DEST="${XDG_CACHE_HOME:-$HOME/.cache}/augmem/cortext/assets/${VERSION}"
   fi
 fi
-BASE_URL="${CORTEXT_ASSETS_URL:-https://github.com/augmem/cortext/releases/download/v${VERSION}/cortext-assets-${VERSION}.tar.gz}"
+BASE_URL="${CORTEXT_ASSETS_URL:-https://github.com/augmem/cortext.cpp/releases/download/v${VERSION}/cortext-assets-${VERSION}.tar.gz}"
 SUM_URL="${BASE_URL}.sha256"
 
 mkdir -p "$DEST"

@@ -6,7 +6,7 @@ import 'package:path/path.dart' as p;
 import 'platform.dart';
 import 'version.dart';
 
-const _defaultAssetsRepo = 'augmem/cortext';
+const _defaultAssetsRepo = 'augmem/cortext.cpp';
 const _assetsMarkerName = '.cortext-assets-ok';
 
 /// Resolves the unpacked assets root containing `native/` and `models/`.

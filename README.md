@@ -144,7 +144,7 @@ dart analyze
 
 ### Regenerate FFI bindings
 
-Requires a local [augmem/cortext](https://github.com/augmem/cortext) checkout:
+Requires a local [augmem/cortext.cpp](https://github.com/augmem/cortext.cpp) checkout:
 
 ```bash
 # from cortext.dart with ../cortext present
@@ -178,7 +178,8 @@ cortext.dart/
 
 | Repo | Role |
 | --- | --- |
-| [`augmem/cortext`](https://github.com/augmem/cortext) | Engine (C++/Zig), in-tree binding prototypes |
+| [`augmem/cortext`](https://github.com/augmem/cortext) | Super-repo (all language variants) |
+| [`augmem/cortext.cpp`](https://github.com/augmem/cortext.cpp) | Engine (C++/Zig) |
 | [`augmem/cortext.py`](https://github.com/augmem/cortext.py) | Python |
 | [`augmem/cortext.go`](https://github.com/augmem/cortext.go) | Go |
 | [`augmem/cortext.ts`](https://github.com/augmem/cortext.ts) | TypeScript / Node |
