@@ -382,6 +382,85 @@ class CortextBindings {
             )
           >();
 
+  /// @brief Processes text with source media and returns Context JSON.
+  ffi.Pointer<ffi.Char> cortext_process_text_with_media_json(
+    cortext_handle h,
+    ffi.Pointer<ffi.Char> text,
+    ffi.Pointer<ffi.Char> source_id,
+    ffi.Pointer<cortext_media> media,
+  ) {
+    return _cortext_process_text_with_media_json(
+      h,
+      text,
+      source_id,
+      media,
+    );
+  }
+
+  late final _cortext_process_text_with_media_jsonPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Pointer<ffi.Char> Function(
+            cortext_handle,
+            ffi.Pointer<ffi.Char>,
+            ffi.Pointer<ffi.Char>,
+            ffi.Pointer<cortext_media>,
+          )
+        >
+      >('cortext_process_text_with_media_json');
+  late final _cortext_process_text_with_media_json =
+      _cortext_process_text_with_media_jsonPtr
+          .asFunction<
+            ffi.Pointer<ffi.Char> Function(
+              cortext_handle,
+              ffi.Pointer<ffi.Char>,
+              ffi.Pointer<ffi.Char>,
+              ffi.Pointer<cortext_media>,
+            )
+          >();
+
+  /// @brief Processes text with source media and returns configurable Context
+  /// JSON.
+  ffi.Pointer<ffi.Char> cortext_process_text_with_media_json_with_options(
+    cortext_handle h,
+    ffi.Pointer<ffi.Char> text,
+    ffi.Pointer<ffi.Char> source_id,
+    ffi.Pointer<cortext_media> media,
+    ffi.Pointer<cortext_process_json_options> options,
+  ) {
+    return _cortext_process_text_with_media_json_with_options(
+      h,
+      text,
+      source_id,
+      media,
+      options,
+    );
+  }
+
+  late final _cortext_process_text_with_media_json_with_optionsPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Pointer<ffi.Char> Function(
+            cortext_handle,
+            ffi.Pointer<ffi.Char>,
+            ffi.Pointer<ffi.Char>,
+            ffi.Pointer<cortext_media>,
+            ffi.Pointer<cortext_process_json_options>,
+          )
+        >
+      >('cortext_process_text_with_media_json_with_options');
+  late final _cortext_process_text_with_media_json_with_options =
+      _cortext_process_text_with_media_json_with_optionsPtr
+          .asFunction<
+            ffi.Pointer<ffi.Char> Function(
+              cortext_handle,
+              ffi.Pointer<ffi.Char>,
+              ffi.Pointer<ffi.Char>,
+              ffi.Pointer<cortext_media>,
+              ffi.Pointer<cortext_process_json_options>,
+            )
+          >();
+
   /// @brief Processes audio input and returns the resulting Context as JSON.
   ffi.Pointer<ffi.Char> cortext_process_audio_json(
     cortext_handle h,
@@ -879,7 +958,7 @@ final class cortext_config extends ffi.Struct {
   external int signal_filter_text_enabled;
 }
 
-/// @brief Optional source media payload persisted for audio/image signals.
+/// @brief Optional source media payload persisted for text/audio/image signals.
 final class cortext_media extends ffi.Struct {
   external ffi.Pointer<ffi.Uint8> data;
 

@@ -100,14 +100,17 @@ Use `dbPath: ':memory:'` for a temporary engine.
 
 | Symbol | Notes |
 | --- | --- |
-| `Cortext` | Engine handle (`processText`, `embedText`, audio/image, `consolidate`, `flush`, `reset`, `close`) |
+| `Cortext` | Engine handle (`processText`, `processTextWithMedia`, `embedText`, audio/image, `consolidate`, `flush`, `reset`, `close`) |
 | `Config`, `Media`, `ProcessOptions`, `Retention` | Configuration types |
 | `CortextLibrary` | Low-level dynamic library open + `version` / `lastError` |
 | `CortextAssets.ensure()` | Download/unpack release assets (sync) |
 | `platformTag()`, `packageVersion`, `defaultAssetsVersion` | Platform / version helpers |
 
 Audio input is **16 kHz mono float32 PCM**. Image input is row-major RGB/RGBA
-with explicit dimensions. Undersized buffers are rejected before native calls.
+with explicit dimensions. `Media` payloads accept arbitrary binary bytes plus a
+MIME type; use `processTextWithMedia`, `processAudioWithMedia`, or
+`processImageWithMedia` to persist a source payload alongside the signal.
+Undersized image buffers are rejected before native calls.
 
 Decoded process maps always include `consolidation_state`
 (`none` \| `recommended` \| `required`), including when older natives only

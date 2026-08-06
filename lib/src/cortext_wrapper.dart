@@ -398,12 +398,85 @@ final class Cortext {
     );
   }
 
+  /// Processes text and persists an optional arbitrary binary media payload.
+  ///
+  /// [media] is copied by the native call. Its bytes are kept binary (they are
+  /// not decoded as text), and [Media.mimetype] identifies their content type.
+  String processTextWithMediaJson(
+    String text,
+    String sourceId,
+    Media? media, [
+    ProcessOptions options = const ProcessOptions(),
+  ]) {
+    _ensureOpen();
+    final textPointer = text.toNativeUtf8();
+    final sourcePointer = sourceId.toNativeUtf8();
+    final optionsPointer = _allocateProcessOptions(options);
+    Pointer<cortext_media> mediaPointer = nullptr;
+    Pointer<Uint8> mediaDataPointer = nullptr;
+    Pointer<Utf8> mediaMimePointer = nullptr;
+    try {
+      if (media != null && media.data.isNotEmpty) {
+        if (media.mimetype.isEmpty) {
+          throw ArgumentError.value(
+            media.mimetype,
+            'media.mimetype',
+            'must not be empty when media data is provided',
+          );
+        }
+        // Allocate bytes as Uint8 rather than converting through a string so
+        // arbitrary binary payloads, including embedded NUL bytes, survive.
+        mediaDataPointer = malloc<Uint8>(media.data.length);
+        mediaDataPointer.asTypedList(media.data.length).setAll(0, media.data);
+        mediaMimePointer = media.mimetype.toNativeUtf8();
+        mediaPointer = malloc<cortext_media>();
+        mediaPointer.ref
+          ..data = mediaDataPointer
+          ..size = media.data.length
+          ..mimetype = mediaMimePointer.cast();
+      }
+      final raw = _library.bindings
+          .cortext_process_text_with_media_json_with_options(
+            _handle,
+            textPointer.cast(),
+            sourcePointer.cast(),
+            mediaPointer,
+            optionsPointer,
+          );
+      return _takeJsonString(raw);
+    } finally {
+      malloc.free(textPointer);
+      malloc.free(sourcePointer);
+      malloc.free(optionsPointer);
+      if (mediaPointer != nullptr) {
+        malloc.free(mediaPointer);
+      }
+      if (mediaDataPointer != nullptr) {
+        malloc.free(mediaDataPointer);
+      }
+      if (mediaMimePointer != nullptr) {
+        malloc.free(mediaMimePointer);
+      }
+    }
+  }
+
   Map<String, dynamic> processText(
     String text,
     String sourceId, [
     ProcessOptions options = const ProcessOptions(),
   ]) {
     return _decodeJsonObject(processTextJson(text, sourceId, options));
+  }
+
+  Map<String, dynamic> processTextWithMedia(
+    String text,
+    String sourceId,
+    Media? media, [
+    ProcessOptions options = const ProcessOptions(),
+  ]) {
+    return _decodeJsonObject(
+      processTextWithMediaJson(text, sourceId, media, options),
+    );
   }
 
   String embedTextJson(String text) {

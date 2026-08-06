@@ -6,6 +6,13 @@ are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project aims to follow [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Added
+
+- Text media payload support through `processTextWithMedia` and its JSON/options
+  FFI entry points, preserving arbitrary binary bytes and MIME types.
+
 ## [1.2.4] - 2026-07-24
 
 ### Added

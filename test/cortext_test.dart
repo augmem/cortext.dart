@@ -78,6 +78,13 @@ void main() {
       );
     });
 
+    test('exposes text media process APIs', () {
+      // Tear-offs verify the public API without requiring a new native symbol
+      // from older release assets used by compatibility tests.
+      expect(engine!.processTextWithMedia, isA<Function>());
+      expect(engine!.processTextWithMediaJson, isA<Function>());
+    });
+
     test('durable process then embedText', () {
       engine!.processText(
         'Bailey likes tennis balls.',
@@ -91,6 +98,17 @@ void main() {
     test('flush and reset succeed', () {
       engine!.flush();
       engine!.reset();
+    });
+  });
+
+  group('media payloads', () {
+    test('accept arbitrary binary bytes with a MIME type', () {
+      final media = Media(
+        data: Uint8List.fromList(<int>[0, 1, 255, 0, 42]),
+        mimetype: 'application/octet-stream',
+      );
+      expect(media.data, orderedEquals(<int>[0, 1, 255, 0, 42]));
+      expect(media.mimetype, 'application/octet-stream');
     });
   });
 
