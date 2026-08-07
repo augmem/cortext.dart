@@ -110,6 +110,19 @@ void main() {
       expect(media.data, orderedEquals(<int>[0, 1, 255, 0, 42]));
       expect(media.mimetype, 'application/octet-stream');
     });
+
+    test('rejects media data without a MIME type before native', () {
+      final engine = Cortext(dbPath: ':memory:');
+      addTearDown(engine.close);
+      expect(
+        () => engine.processTextWithMediaJson(
+          'text with invalid media',
+          'media/validation',
+          Media(data: Uint8List.fromList(<int>[1]), mimetype: ''),
+        ),
+        throwsA(isA<ArgumentError>()),
+      );
+    });
   });
 
   group('image validation', () {
