@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:cortext/cortext.dart';
@@ -109,6 +111,57 @@ void main() {
       );
       expect(media.data, orderedEquals(<int>[0, 1, 255, 0, 42]));
       expect(media.mimetype, 'application/octet-stream');
+    });
+
+    test('mixed memory returns every payload with its MIME type', () {
+      final dir = Directory.systemTemp.createTempSync('cortext_mixed_');
+      addTearDown(() => dir.deleteSync(recursive: true));
+      final engine = Cortext(dbPath: '${dir.path}/mixed.db');
+      addTearDown(engine.close);
+      final photo = Uint8List.fromList(
+        <int>[0xff, 0xd8, 0xff, 0xe0, 1, 2, 3, 0xff, 0xd9],
+      );
+      // One turn = one source: a text signal and its photo, as peers.
+      engine.processText(
+        'The parking garage ticket says level 4 spot 27.',
+        'chat/user/turn1',
+        const ProcessOptions(retention: Retention.natural),
+      );
+      engine.processImageWithMedia(
+        Uint8List(8 * 8 * 3)..fillRange(0, 8 * 8 * 3, 128),
+        8,
+        8,
+        3,
+        'chat/user/turn1',
+        Media(data: photo, mimetype: 'image/jpeg'),
+        const ProcessOptions(retention: Retention.durable),
+      );
+      final ctx = engine.processText(
+        'parking garage level spot',
+        'query/public',
+        const ProcessOptions(retention: Retention.ephemeral),
+      );
+      final memories = <Map<String, dynamic>>[
+        for (final m in [
+          ...ctx['retrieved_memory'] as List,
+          ...ctx['working_memory'] as List,
+        ])
+          Map<String, dynamic>.from(m as Map),
+      ];
+      final mixed = memories.where((m) => m['modality'] == 'mixed').toList();
+      expect(mixed, isNotEmpty);
+      for (final memory in mixed) {
+        final content = [
+          for (final c in memory['content'] as List)
+            Map<String, dynamic>.from(c as Map),
+        ];
+        expect(
+          content.map((c) => c['mimetype']),
+          unorderedEquals(<String>['text/plain', 'image/jpeg']),
+        );
+        final image = content.firstWhere((c) => c['mimetype'] == 'image/jpeg');
+        expect(base64Decode(image['base64'] as String), orderedEquals(photo));
+      }
     });
 
     test('rejects media data without a MIME type before native', () {
