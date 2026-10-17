@@ -943,9 +943,6 @@ final class cortext_config extends ffi.Struct {
   external int reinforcement_enabled;
 
   @ffi.Int()
-  external int procedural_enabled;
-
-  @ffi.Int()
   external int sequential_edges_enabled;
 
   @ffi.Int()

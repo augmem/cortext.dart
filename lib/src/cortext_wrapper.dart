@@ -30,7 +30,6 @@ final class Config {
     this.affectInterrupt = true,
     this.affectRetrieval = true,
     this.reinforcementEnabled = true,
-    this.proceduralEnabled = true,
     this.sequentialEdgesEnabled = true,
     this.signalFilterAudioEnabled = true,
     this.signalFilterImageEnabled = true,
@@ -43,7 +42,6 @@ final class Config {
   final bool affectInterrupt;
   final bool affectRetrieval;
   final bool reinforcementEnabled;
-  final bool proceduralEnabled;
   final bool sequentialEdgesEnabled;
   final bool signalFilterAudioEnabled;
   final bool signalFilterImageEnabled;
@@ -327,7 +325,6 @@ final class Cortext {
           ..affect_interrupt = _boolToInt(configValue.affectInterrupt)
           ..affect_retrieval = _boolToInt(configValue.affectRetrieval)
           ..reinforcement_enabled = _boolToInt(configValue.reinforcementEnabled)
-          ..procedural_enabled = _boolToInt(configValue.proceduralEnabled)
           ..sequential_edges_enabled = _boolToInt(
             configValue.sequentialEdgesEnabled,
           )

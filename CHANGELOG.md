@@ -8,6 +8,12 @@ and this project aims to follow [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
+### Removed
+
+- `Config.proceduralEnabled` and the `procedural_enabled` field of the native
+  `cortext_config` struct. The engine flag controlled nothing and was removed
+  from the C ABI; this binding requires an engine built without it.
+
 ### Added
 
 - Text media payload support through `processTextWithMedia` and its JSON/options
