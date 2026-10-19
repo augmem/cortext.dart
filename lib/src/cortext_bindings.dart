@@ -978,4 +978,7 @@ final class cortext_process_json_options extends ffi.Struct {
 
   @ffi.Int()
   external int reserved;
+
+  @ffi.Size()
+  external int evidence_budget_bytes;
 }

@@ -8,6 +8,14 @@ and this project aims to follow [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
+### Added
+
+- `ProcessOptions.evidenceBudgetBytes` and the `evidence_budget_bytes` field of
+  the native `cortext_process_json_options` struct: a per-call evidence budget
+  (null returns recalled memories whole). Requires an engine with the field.
+- README: query contexts lead with `standing_memory`, ahead of
+  `retrieved_memory`.
+
 ### Removed
 
 - `Config.proceduralEnabled` and the `procedural_enabled` field of the native

@@ -61,10 +61,21 @@ final class ProcessOptions {
   const ProcessOptions({
     this.includeEmbedding = true,
     this.retention = Retention.natural,
+    this.evidenceBudgetBytes,
   });
 
   final bool includeEmbedding;
   final Retention retention;
+
+  /// Evidence budget for the returned packet, in bytes. Null (the default)
+  /// returns recalled memories whole. A positive value fits
+  /// `standing_memory` plus `retrieved_memory` (with attached neighbours)
+  /// within it, text counted by its UTF-8 bytes and other payloads as 480
+  /// bytes each; grouped memories keep their members most similar to the
+  /// query, and more distinct memories are kept trimmed before lower-ranked
+  /// ones are left out. Convert a token budget with the reader's tokenizer
+  /// rate (8,000 tokens at 4.35 chars/token is 34,800).
+  final int? evidenceBudgetBytes;
 }
 
 enum Retention { natural, durable, boundary, ephemeral }
@@ -844,12 +855,21 @@ final class Cortext {
   Pointer<cortext_process_json_options> _allocateProcessOptions(
     ProcessOptions options,
   ) {
+    final budget = options.evidenceBudgetBytes;
+    if (budget != null && budget <= 0) {
+      throw ArgumentError.value(
+        budget,
+        'evidenceBudgetBytes',
+        'must be positive (null for whole memories)',
+      );
+    }
     final pointer = malloc<cortext_process_json_options>();
     pointer.ref
       ..struct_size = sizeOf<cortext_process_json_options>()
       ..include_embedding = options.includeEmbedding ? 1 : 0
       ..retention = options.retention.index
-      ..reserved = 0;
+      ..reserved = 0
+      ..evidence_budget_bytes = budget ?? 0;
     return pointer;
   }
 

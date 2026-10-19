@@ -164,6 +164,71 @@ void main() {
       }
     });
 
+    test('an evidence budget bounds standing and retrieved memory', () {
+      final dir = Directory.systemTemp.createTempSync('cortext_budget_');
+      addTearDown(() => dir.deleteSync(recursive: true));
+      final engine = Cortext(dbPath: '${dir.path}/budget.db');
+      addTearDown(engine.close);
+      const durable = ProcessOptions(retention: Retention.durable);
+      engine.processText(
+        'Always answer with the departure pier.',
+        'chat/rules',
+        durable,
+      );
+      for (var i = 0; i < 6; i++) {
+        engine.processText(
+          'The ferry to the island leaves at ${6 + i} from pier four.',
+          'chat/ferry/$i',
+          durable,
+        );
+      }
+      int evidence(Map<String, dynamic> ctx) {
+        var bytes = 0;
+        for (final key in ['standing_memory', 'retrieved_memory']) {
+          for (final m in ctx[key] as List) {
+            for (final c in (m as Map)['content'] as List) {
+              final content = c as Map;
+              bytes += (content['mimetype'] as String).startsWith('text/')
+                  ? content['size_bytes'] as int
+                  : 480;
+            }
+          }
+        }
+        return bytes;
+      }
+
+      const query = 'When does the ferry leave?';
+      final whole = engine.processText(
+        query,
+        'query/public',
+        const ProcessOptions(retention: Retention.ephemeral),
+      );
+      final wholeCount = (whole['retrieved_memory'] as List).length;
+      expect(wholeCount, greaterThanOrEqualTo(2));
+      final budget = evidence(whole) ~/ 2;
+      final budgeted = engine.processText(
+        query,
+        'query/public',
+        ProcessOptions(
+          retention: Retention.ephemeral,
+          evidenceBudgetBytes: budget,
+        ),
+      );
+      expect(evidence(budgeted), lessThanOrEqualTo(budget));
+      expect(
+        (budgeted['retrieved_memory'] as List).length,
+        lessThan(wholeCount),
+      );
+      expect(
+        () => engine.processText(
+          query,
+          'query/public',
+          const ProcessOptions(evidenceBudgetBytes: 0),
+        ),
+        throwsArgumentError,
+      );
+    });
+
     test('rejects media data without a MIME type before native', () {
       final engine = Cortext(dbPath: ':memory:');
       addTearDown(engine.close);
