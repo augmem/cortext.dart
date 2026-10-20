@@ -900,17 +900,23 @@ final class Cortext {
           'referenceTime is read only by Retention.ephemeral (query) calls',
         );
       }
-      if (reference.millisecondsSinceEpoch < 0) {
+      // The engine reads reference_ms == 0 as "no reference time".
+      if (reference.millisecondsSinceEpoch <= 0) {
         throw ArgumentError.value(
           reference,
           'referenceTime',
-          'must not be before the Unix epoch',
+          'must be after the Unix epoch',
         );
       }
     }
     final pointer = calloc<cortext_process_json_options>();
     pointer.ref.struct_size = sizeOf<cortext_process_json_options>();
-    _library.bindings.cortext_process_json_options_init(pointer);
+    try {
+      _library.bindings.cortext_process_json_options_init(pointer);
+    } on Object {
+      calloc.free(pointer);
+      rethrow;
+    }
     pointer.ref
       ..include_embedding = options.includeEmbedding ? 1 : 0
       ..retention = options.retention.index

@@ -144,11 +144,12 @@ String? findAistModelPath({Map<String, String>? environment}) {
 
 /// Locate the AIST late-interaction reranker (`AIST-87M-LI.gguf`).
 ///
-/// The engine requires it whenever an AIST model is in use. Resolution order
-/// matches the engine: `CORTEXT_LI_MODEL_PATH` (null when set but missing, so
-/// the engine reports that path), then [liModelFileName] beside
-/// [aistModelPath], then the asset roots. [environment] defaults to the
-/// process environment.
+/// The engine requires it whenever an AIST model is in use. Order:
+/// `CORTEXT_LI_MODEL_PATH` (null when set but missing, so the engine reports
+/// that path), then [liModelFileName] beside [aistModelPath] (the engine's own
+/// order), then the asset roots. The asset-root fallback is the binding's;
+/// the engine instead falls back to a reranker linked into the native
+/// library. [environment] defaults to the process environment.
 String? findLiModelPath({
   String? aistModelPath,
   Map<String, String>? environment,
@@ -171,10 +172,12 @@ String? findLiModelPath({
 /// Points the native engine at on-disk models for `cortext_create`.
 ///
 /// When the process does not pin `CORTEXT_AIST_MODEL_PATH` and a full GGUF is
-/// found, that variable is set. When an AIST model is in use and
-/// `CORTEXT_LI_MODEL_PATH` is unset, the reranker found by [findLiModelPath]
-/// is pinned too, so an AIST model resolved from one root still finds a
-/// reranker that lives in another. Returns the variables this call set; pass
+/// found, that variable is set. When an on-disk AIST model is in use (pinned
+/// by the caller or by this call) and `CORTEXT_LI_MODEL_PATH` is unset, the
+/// reranker found by [findLiModelPath] is pinned too, so an AIST model
+/// resolved from one root still finds a reranker that lives in another. When
+/// no on-disk AIST model is in use, nothing is pinned and natives that embed
+/// both models use their own pair. Returns the variables this call set; pass
 /// them to [restoreModelEnv] after create so natives that embed the models
 /// are not permanently shadowed.
 List<String> ensureModelEnvForCreate() {
@@ -186,9 +189,12 @@ List<String> ensureModelEnvForCreate() {
     if (aist == null) {
       return setNames; // embedded natives resolve both models themselves
     }
-    if (setProcessEnv(_aistEnv, aist)) {
-      setNames.add(_aistEnv);
+    if (!setProcessEnv(_aistEnv, aist)) {
+      // The engine will not see this AIST model, so do not pair a reranker
+      // with whatever model it does load.
+      return setNames;
     }
+    setNames.add(_aistEnv);
   }
   final pinnedLi = env[_liEnv]?.trim();
   if (pinnedLi == null || pinnedLi.isEmpty) {

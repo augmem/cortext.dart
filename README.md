@@ -134,7 +134,7 @@ final ctx = memory.processText(
 `referenceTime` (past or future, millisecond precision) adds the long-term
 memories nearest that time as retrieval candidates; with `asOf: true`, memories
 stored after it are hidden. Without `referenceTime` retrieval is unchanged.
-`asOf` without `referenceTime`, a `referenceTime` before the Unix epoch, or a
+`asOf` without `referenceTime`, a `referenceTime` at or before the Unix epoch, or a
 `referenceTime` on a non-ephemeral call throws `ArgumentError`.
 
 ### Text with caller media

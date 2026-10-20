@@ -335,8 +335,9 @@ void main() {
         null,
         const ProcessOptions(retention: Retention.durable),
       );
+      const emptyMediaText = 'The lighthouse lamp is serviced every spring.';
       engine.processTextWithMedia(
-        'The lighthouse lamp is serviced every spring.',
+        emptyMediaText,
         'chat/lighthouse-2',
         Media(data: Uint8List(0), mimetype: 'image/png'),
         const ProcessOptions(retention: Retention.durable),
@@ -353,7 +354,7 @@ void main() {
       }
       expect(
         contents.map((c) => utf8.decode(base64Decode(c['base64'] as String))),
-        contains(text),
+        containsAll(<String>[text, emptyMediaText]),
       );
     });
 
@@ -367,6 +368,14 @@ void main() {
           const ProcessOptions(retention: Retention.durable),
         );
       }
+      final whole = engine.processTextWithMedia(
+        'tide pool north jetty photo',
+        'query/public',
+        null,
+        const ProcessOptions(retention: Retention.ephemeral),
+      );
+      expect(whole['retrieved_memory'], isNotEmpty);
+      expect(_evidenceBytes(whole), greaterThan(2 * mediaEvidenceBytes));
       const budget = 2 * mediaEvidenceBytes;
       final ctx = engine.processTextWithMedia(
         'tide pool north jetty photo',
@@ -378,6 +387,7 @@ void main() {
         ),
       );
       expect(_evidenceBytes(ctx), lessThanOrEqualTo(budget));
+      expect(ctx['retrieved_memory'], isNotEmpty);
     });
   });
 
@@ -500,6 +510,18 @@ void main() {
       dir.deleteSync(recursive: true);
     });
 
+    // Long-term recall (standing + retrieved); working memory is the live
+    // conversation and is not filtered by a reference time.
+    Set<Object?> recalledTrainSources(ProcessOptions options) {
+      final ctx = engine.processText(query, 'query/public', options);
+      return {
+        for (final key in ['standing_memory', 'retrieved_memory'])
+          for (final m in ctx[key] as List)
+            if (((m as Map)['source_id'] as String).startsWith('chat/train/'))
+              m['source_id'],
+      };
+    }
+
     List<Object?> retrieved(ProcessOptions options) =>
         engine.processText(query, 'query/public', options)['retrieved_memory']
             as List;
@@ -521,7 +543,7 @@ void main() {
     test('asOf hides memories stored after the reference time', () {
       final past = DateTime.utc(2001, 1, 1);
       expect(
-        retrieved(
+        recalledTrainSources(
           ProcessOptions(
             retention: Retention.ephemeral,
             referenceTime: past,
@@ -569,7 +591,7 @@ void main() {
           'query/public',
           ProcessOptions(
             retention: Retention.ephemeral,
-            referenceTime: DateTime.utc(1969, 12, 31),
+            referenceTime: DateTime.utc(1970),
           ),
         ),
         throwsArgumentError,
