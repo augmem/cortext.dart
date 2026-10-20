@@ -51,7 +51,7 @@ jobs:
 
       - name: Fetch release assets (host native)
         env:
-          CORTEXT_ASSETS_VERSION: "1.2.4"
+          CORTEXT_ASSETS_VERSION: "2.0.0"
         run: |
           set -euo pipefail
           DEST="${RUNNER_TEMP}/cortext-assets"

@@ -8,7 +8,7 @@ This repository is the language-binding home for Dart — the sibling of
 [`cortext.ts`](https://github.com/augmem/cortext.ts). It publishes the
 [pub.dev](https://pub.dev) package **`cortext`**.
 
-Binding **1.2.4** tracks engine assets **v1.2.4**.
+Binding **2.0.0** tracks engine assets **v2.0.0**.
 
 ## Install
 
@@ -16,7 +16,7 @@ Binding **1.2.4** tracks engine assets **v1.2.4**.
 dart pub add cortext
 # or in pubspec.yaml:
 # dependencies:
-#   cortext: ^1.2.4
+#   cortext: ^2.0.0
 ```
 
 Dart SDK **3.5+**. Desktop/server targets:
@@ -174,7 +174,7 @@ return boolean flags.
 | --- | --- |
 | `CORTEXT_LIBRARY_PATH` | Explicit shared library path |
 | `CORTEXT_ASSETS_DIR` | Pre-unpacked release tree (`native/` + `models/`) |
-| `CORTEXT_ASSETS_VERSION` | Release version to fetch (default `1.2.4`) |
+| `CORTEXT_ASSETS_VERSION` | Release version to fetch (default `2.0.0`) |
 | `CORTEXT_ASSETS_URL` | Override archive URL |
 | `CORTEXT_ASSETS_SHA256` | Override expected archive checksum |
 | `CORTEXT_ASSET_CACHE_DIR` | Parent cache dir for downloaded versions |
@@ -199,7 +199,7 @@ dart pub get
 
 # Option A: fetch release natives
 ./scripts/fetch_assets.sh
-export CORTEXT_ASSETS_DIR="$HOME/Library/Caches/augmem/cortext/assets/1.2.4"  # macOS default
+export CORTEXT_ASSETS_DIR="$HOME/Library/Caches/augmem/cortext/assets/2.0.0"  # macOS default
 
 # Option B: monorepo engine checkout at ../cortext with ffi-release build
 
@@ -245,7 +245,7 @@ cortext.dart/
 ```bash
 # 1) Bump version in pubspec.yaml + CHANGELOG.md + lib/src/version.dart
 # 2) dart pub get && dart analyze && dart test
-# 3) git tag v1.2.4 && git push origin v1.2.4
+# 3) git tag v2.0.0 && git push origin v2.0.0
 # 4) dart pub publish
 ```
 

@@ -2,7 +2,7 @@ name: cortext
 description: >
   Dart FFI bindings for the Cortext memory engine — on-device long-horizon
   memory for agents and apps (text, audio, image).
-version: 1.2.4
+version: 2.0.0
 repository: https://github.com/augmem/cortext.dart
 homepage: https://github.com/augmem/cortext.dart
 issue_tracker: https://github.com/augmem/cortext.dart/issues

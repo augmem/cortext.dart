@@ -6,12 +6,12 @@ are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project aims to follow [Semantic Versioning](https://semver.org/).
 
-## Unreleased
+## [2.0.0] - 2026-10-20
 
-Requires the next cortext.cpp engine release (engine v5, per-blob content
-timestamps and reference-time retrieval; cortext.cpp `main` at f0b681e9). No
-released engine has these features yet, so the package version and the pinned
-assets version stay at 1.2.4 until that release.
+Requires cortext.cpp engine **v2.0.0** (engine v5, per-blob content timestamps
+and reference-time retrieval); release assets default to
+`cortext-assets-2.0.0.tar.gz`. The major version follows the engine: the C ABI
+broke.
 
 ### Breaking
 
