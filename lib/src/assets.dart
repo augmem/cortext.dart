@@ -279,6 +279,9 @@ Map<String, Object?> assetsDebugInfo() {
       'CORTEXT_LIBRARY_PATH': Platform.environment['CORTEXT_LIBRARY_PATH'],
       'CORTEXT_ASSETS_DIR': Platform.environment['CORTEXT_ASSETS_DIR'],
       'CORTEXT_ASSETS_VERSION': Platform.environment['CORTEXT_ASSETS_VERSION'],
+      'CORTEXT_AIST_MODEL_PATH':
+          Platform.environment['CORTEXT_AIST_MODEL_PATH'],
+      'CORTEXT_LI_MODEL_PATH': Platform.environment['CORTEXT_LI_MODEL_PATH'],
     },
   };
 }

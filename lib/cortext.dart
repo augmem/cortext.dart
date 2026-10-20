@@ -5,7 +5,8 @@
 library;
 
 export 'src/assets.dart' show CortextAssets, assetsRootReady, assetsDebugInfo;
-export 'src/model.dart' show findAistModelPath;
+export 'src/model.dart'
+    show findAistModelPath, findLiModelPath, liModelFileName;
 export 'src/platform.dart'
     show platformTag, supportedNativeTargets, hostLibraryName, libraryNameForTag;
 export 'src/version.dart' show packageVersion, defaultAssetsVersion;

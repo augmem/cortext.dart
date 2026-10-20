@@ -56,12 +56,18 @@ final class Media {
   final String mimetype;
 }
 
+/// Evidence charge of one non-text payload under
+/// [ProcessOptions.evidenceBudgetBytes] (`CORTEXT_MEDIA_EVIDENCE_BYTES`).
+const mediaEvidenceBytes = 480;
+
 @immutable
 final class ProcessOptions {
   const ProcessOptions({
     this.includeEmbedding = true,
     this.retention = Retention.natural,
     this.evidenceBudgetBytes,
+    this.referenceTime,
+    this.asOf = false,
   });
 
   final bool includeEmbedding;
@@ -70,12 +76,22 @@ final class ProcessOptions {
   /// Evidence budget for the returned packet, in bytes. Null (the default)
   /// returns recalled memories whole. A positive value fits
   /// `standing_memory` plus `retrieved_memory` (with attached neighbours)
-  /// within it, text counted by its UTF-8 bytes and other payloads as 480
-  /// bytes each; grouped memories keep their members most similar to the
-  /// query, and more distinct memories are kept trimmed before lower-ranked
-  /// ones are left out. Convert a token budget with the reader's tokenizer
-  /// rate (8,000 tokens at 4.35 chars/token is 34,800).
+  /// within it, text counted by its UTF-8 bytes and other payloads as
+  /// [mediaEvidenceBytes] each; grouped memories keep their members most
+  /// similar to the query, and more distinct memories are kept trimmed before
+  /// lower-ranked ones are left out. Convert a token budget with the reader's
+  /// tokenizer rate (8,000 tokens at 4.35 chars/token is 34,800).
   final int? evidenceBudgetBytes;
+
+  /// Query reference time, past or future, at millisecond precision. Null
+  /// (the default) leaves retrieval unchanged. When set, the long-term
+  /// memories nearest this time are added as retrieval candidates. Only
+  /// [Retention.ephemeral] (query) calls read it; other retentions reject it.
+  final DateTime? referenceTime;
+
+  /// When true, memories stored after [referenceTime] are hidden, so the
+  /// query sees memory as it stood at that time. Requires [referenceTime].
+  final bool asOf;
 }
 
 enum Retention { natural, durable, boundary, ephemeral }
@@ -117,7 +133,10 @@ final class CortextLibrary {
   ///
   /// Release assets are preferred over monorepo outputs so a sibling engine
   /// checkout with an incomplete native does not shadow the official path.
-  static CortextLibrary open({String? libraryPath, bool downloadAssets = true}) {
+  static CortextLibrary open({
+    String? libraryPath,
+    bool downloadAssets = true,
+  }) {
     if (libraryPath != null) {
       return _openPath(libraryPath);
     }
@@ -160,8 +179,9 @@ final class CortextLibrary {
       }
     }
 
-    final assetsDetail =
-        assetsError == null ? '' : ' Asset resolution failed: $assetsError.';
+    final assetsDetail = assetsError == null
+        ? ''
+        : ' Asset resolution failed: $assetsError.';
     throw CortextError(
       'Could not locate the Cortext shared library for ${platformTag()}. '
       'Set CORTEXT_LIBRARY_PATH, CORTEXT_ASSETS_DIR, run scripts/fetch_assets.sh, '
@@ -258,7 +278,10 @@ final class CortextLibrary {
         if (pubspec.existsSync()) {
           try {
             final text = pubspec.readAsStringSync();
-            if (RegExp(r'^name:\s*cortext\s*$', multiLine: true).hasMatch(text)) {
+            if (RegExp(
+              r'^name:\s*cortext\s*$',
+              multiLine: true,
+            ).hasMatch(text)) {
               roots.add(current.path);
             }
           } on Object {
@@ -321,9 +344,10 @@ final class Cortext {
   }) : _library = library ?? CortextLibrary.open(libraryPath: libraryPath) {
     final nativeConfig = calloc<cortext_config>();
     Pointer<Utf8>? dbPathPointer;
-    // Prefer an on-disk GGUF when present (monorepo / assets). Clear after
-    // create so embedded release natives are not permanently shadowed.
-    final previousModelEnv = ensureAistModelEnvForCreate();
+    // Prefer on-disk AIST + reranker GGUFs when present (monorepo / assets).
+    // Clear after create so embedded release natives are not permanently
+    // shadowed.
+    final modelEnvSet = ensureModelEnvForCreate();
 
     try {
       _library.bindings.cortext_config_init(nativeConfig);
@@ -360,7 +384,7 @@ final class Cortext {
         _throwLastError('cortext_create_with_config failed');
       }
     } finally {
-      restoreAistModelEnv(previousModelEnv);
+      restoreModelEnv(modelEnvSet);
       calloc.free(nativeConfig);
       if (dbPathPointer != null) {
         malloc.free(dbPathPointer);
@@ -402,7 +426,7 @@ final class Cortext {
             sourcePointer.cast(),
             optionsPointer,
           ),
-      after: () => malloc.free(optionsPointer),
+      after: () => calloc.free(optionsPointer),
     );
   }
 
@@ -417,9 +441,10 @@ final class Cortext {
     ProcessOptions options = const ProcessOptions(),
   ]) {
     _ensureOpen();
+    // Options validate first so a rejected option allocates nothing.
+    final optionsPointer = _allocateProcessOptions(options);
     final textPointer = text.toNativeUtf8();
     final sourcePointer = sourceId.toNativeUtf8();
-    final optionsPointer = _allocateProcessOptions(options);
     Pointer<cortext_media> mediaPointer = nullptr;
     Pointer<Uint8> mediaDataPointer = nullptr;
     Pointer<Utf8> mediaMimePointer = nullptr;
@@ -455,7 +480,7 @@ final class Cortext {
     } finally {
       malloc.free(textPointer);
       malloc.free(sourcePointer);
-      malloc.free(optionsPointer);
+      calloc.free(optionsPointer);
       if (mediaPointer != nullptr) {
         malloc.free(mediaPointer);
       }
@@ -509,8 +534,8 @@ final class Cortext {
     ProcessOptions options = const ProcessOptions(),
   ]) {
     _ensureOpen();
-    final sourcePointer = sourceId.toNativeUtf8();
     final optionsPointer = _allocateProcessOptions(options);
+    final sourcePointer = sourceId.toNativeUtf8();
     Pointer<Float> pcmPointer = nullptr;
     try {
       if (pcm.isNotEmpty) {
@@ -527,7 +552,7 @@ final class Cortext {
       return _takeJsonString(raw);
     } finally {
       malloc.free(sourcePointer);
-      malloc.free(optionsPointer);
+      calloc.free(optionsPointer);
       if (pcmPointer != nullptr) {
         malloc.free(pcmPointer);
       }
@@ -541,8 +566,8 @@ final class Cortext {
     ProcessOptions options = const ProcessOptions(),
   ]) {
     _ensureOpen();
-    final sourcePointer = sourceId.toNativeUtf8();
     final optionsPointer = _allocateProcessOptions(options);
+    final sourcePointer = sourceId.toNativeUtf8();
     Pointer<Float> pcmPointer = nullptr;
     Pointer<cortext_media> mediaPointer = nullptr;
     Pointer<Uint8> mediaDataPointer = nullptr;
@@ -581,7 +606,7 @@ final class Cortext {
       return _takeJsonString(raw);
     } finally {
       malloc.free(sourcePointer);
-      malloc.free(optionsPointer);
+      calloc.free(optionsPointer);
       if (pcmPointer != nullptr) {
         malloc.free(pcmPointer);
       }
@@ -651,8 +676,8 @@ final class Cortext {
   ]) {
     _ensureOpen();
     _validateImageBuffer(data, width, height, channels);
-    final sourcePointer = sourceId.toNativeUtf8();
     final optionsPointer = _allocateProcessOptions(options);
+    final sourcePointer = sourceId.toNativeUtf8();
     Pointer<Uint8> dataPointer = nullptr;
     try {
       if (data.isNotEmpty) {
@@ -671,7 +696,7 @@ final class Cortext {
       return _takeJsonString(raw);
     } finally {
       malloc.free(sourcePointer);
-      malloc.free(optionsPointer);
+      calloc.free(optionsPointer);
       if (dataPointer != nullptr) {
         malloc.free(dataPointer);
       }
@@ -689,8 +714,8 @@ final class Cortext {
   ]) {
     _ensureOpen();
     _validateImageBuffer(data, width, height, channels);
-    final sourcePointer = sourceId.toNativeUtf8();
     final optionsPointer = _allocateProcessOptions(options);
+    final sourcePointer = sourceId.toNativeUtf8();
     Pointer<Uint8> dataPointer = nullptr;
     Pointer<cortext_media> mediaPointer = nullptr;
     Pointer<Uint8> mediaDataPointer = nullptr;
@@ -731,7 +756,7 @@ final class Cortext {
       return _takeJsonString(raw);
     } finally {
       malloc.free(sourcePointer);
-      malloc.free(optionsPointer);
+      calloc.free(optionsPointer);
       if (dataPointer != nullptr) {
         malloc.free(dataPointer);
       }
@@ -863,13 +888,36 @@ final class Cortext {
         'must be positive (null for whole memories)',
       );
     }
-    final pointer = malloc<cortext_process_json_options>();
+    final reference = options.referenceTime;
+    if (options.asOf && reference == null) {
+      throw ArgumentError.value(options.asOf, 'asOf', 'requires referenceTime');
+    }
+    if (reference != null) {
+      if (options.retention != Retention.ephemeral) {
+        throw ArgumentError.value(
+          options.retention,
+          'retention',
+          'referenceTime is read only by Retention.ephemeral (query) calls',
+        );
+      }
+      if (reference.millisecondsSinceEpoch < 0) {
+        throw ArgumentError.value(
+          reference,
+          'referenceTime',
+          'must not be before the Unix epoch',
+        );
+      }
+    }
+    final pointer = calloc<cortext_process_json_options>();
+    pointer.ref.struct_size = sizeOf<cortext_process_json_options>();
+    _library.bindings.cortext_process_json_options_init(pointer);
     pointer.ref
-      ..struct_size = sizeOf<cortext_process_json_options>()
       ..include_embedding = options.includeEmbedding ? 1 : 0
       ..retention = options.retention.index
-      ..reserved = 0
-      ..evidence_budget_bytes = budget ?? 0;
+      ..evidence_budget_bytes = budget ?? 0
+      ..has_reference_ms = reference == null ? 0 : 1
+      ..as_of = options.asOf ? 1 : 0
+      ..reference_ms = reference?.millisecondsSinceEpoch ?? 0;
     return pointer;
   }
 
