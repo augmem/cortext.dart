@@ -19,6 +19,29 @@ class CortextBindings {
     ffi.Pointer<T> Function<T extends ffi.NativeType>(String symbolName) lookup,
   ) : _lookup = lookup;
 
+  /// @brief Initializes process JSON options to current defaults.
+  ///
+  /// Set struct_size to sizeof(cortext_process_json_options) before calling
+  /// this function to initialize the retention field. A zero struct_size uses
+  /// the legacy prefix for ABI-safe initialization.
+  void cortext_process_json_options_init(
+    ffi.Pointer<cortext_process_json_options> options,
+  ) {
+    return _cortext_process_json_options_init(options);
+  }
+
+  late final _cortext_process_json_options_initPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Void Function(ffi.Pointer<cortext_process_json_options>)
+        >
+      >('cortext_process_json_options_init');
+  late final _cortext_process_json_options_init =
+      _cortext_process_json_options_initPtr
+          .asFunction<
+            void Function(ffi.Pointer<cortext_process_json_options>)
+          >();
+
   /// @brief Creates a Cortext instance.
   /// @param focus Focus knob value in [0.0, 1.0].
   /// @param sensitivity Sensitivity knob value in [0.0, 1.0].
@@ -91,6 +114,122 @@ class CortextBindings {
         )
       >();
 
+  /// @brief Creates a Cortext instance using an externally owned DB provider.
+  /// @param cfg Optional configuration. NULL uses the library defaults.
+  /// @param callbacks Required synchronous DB callback table.
+  /// @param user_data Opaque pointer passed to every callback.
+  /// @return Handle to the created instance, or NULL on failure.
+  ///
+  /// Cortext does not close the provider or take ownership of user_data. The
+  /// provider must stay alive until cortext_free() returns. Until object
+  /// storage is extracted into its own interface, providers must support the
+  /// same SQL-level blob functions Cortext currently uses for payload storage.
+  cortext_handle cortext_create_with_store_callbacks(
+    ffi.Pointer<cortext_config> cfg,
+    ffi.Pointer<cortext_db_callbacks> callbacks,
+    ffi.Pointer<ffi.Void> user_data,
+  ) {
+    return _cortext_create_with_store_callbacks(cfg, callbacks, user_data);
+  }
+
+  late final _cortext_create_with_store_callbacksPtr =
+      _lookup<
+        ffi.NativeFunction<
+          cortext_handle Function(
+            ffi.Pointer<cortext_config>,
+            ffi.Pointer<cortext_db_callbacks>,
+            ffi.Pointer<ffi.Void>,
+          )
+        >
+      >('cortext_create_with_store_callbacks');
+  late final _cortext_create_with_store_callbacks =
+      _cortext_create_with_store_callbacksPtr
+          .asFunction<
+            cortext_handle Function(
+              ffi.Pointer<cortext_config>,
+              ffi.Pointer<cortext_db_callbacks>,
+              ffi.Pointer<ffi.Void>,
+            )
+          >();
+
+  /// @brief Creates a Cortext instance using external DB and object providers.
+  cortext_handle cortext_create_with_store_and_object_callbacks(
+    ffi.Pointer<cortext_config> cfg,
+    ffi.Pointer<cortext_db_callbacks> db_callbacks,
+    ffi.Pointer<ffi.Void> db_user_data,
+    ffi.Pointer<cortext_object_callbacks> object_callbacks,
+    ffi.Pointer<ffi.Void> object_user_data,
+  ) {
+    return _cortext_create_with_store_and_object_callbacks(
+      cfg,
+      db_callbacks,
+      db_user_data,
+      object_callbacks,
+      object_user_data,
+    );
+  }
+
+  late final _cortext_create_with_store_and_object_callbacksPtr =
+      _lookup<
+        ffi.NativeFunction<
+          cortext_handle Function(
+            ffi.Pointer<cortext_config>,
+            ffi.Pointer<cortext_db_callbacks>,
+            ffi.Pointer<ffi.Void>,
+            ffi.Pointer<cortext_object_callbacks>,
+            ffi.Pointer<ffi.Void>,
+          )
+        >
+      >('cortext_create_with_store_and_object_callbacks');
+  late final _cortext_create_with_store_and_object_callbacks =
+      _cortext_create_with_store_and_object_callbacksPtr
+          .asFunction<
+            cortext_handle Function(
+              ffi.Pointer<cortext_config>,
+              ffi.Pointer<cortext_db_callbacks>,
+              ffi.Pointer<ffi.Void>,
+              ffi.Pointer<cortext_object_callbacks>,
+              ffi.Pointer<ffi.Void>,
+            )
+          >();
+
+  /// @brief Creates a Cortext instance with SQLite DB and external object store.
+  cortext_handle cortext_create_with_config_and_object_callbacks(
+    ffi.Pointer<cortext_config> cfg,
+    ffi.Pointer<ffi.Char> db_path,
+    ffi.Pointer<cortext_object_callbacks> object_callbacks,
+    ffi.Pointer<ffi.Void> object_user_data,
+  ) {
+    return _cortext_create_with_config_and_object_callbacks(
+      cfg,
+      db_path,
+      object_callbacks,
+      object_user_data,
+    );
+  }
+
+  late final _cortext_create_with_config_and_object_callbacksPtr =
+      _lookup<
+        ffi.NativeFunction<
+          cortext_handle Function(
+            ffi.Pointer<cortext_config>,
+            ffi.Pointer<ffi.Char>,
+            ffi.Pointer<cortext_object_callbacks>,
+            ffi.Pointer<ffi.Void>,
+          )
+        >
+      >('cortext_create_with_config_and_object_callbacks');
+  late final _cortext_create_with_config_and_object_callbacks =
+      _cortext_create_with_config_and_object_callbacksPtr
+          .asFunction<
+            cortext_handle Function(
+              ffi.Pointer<cortext_config>,
+              ffi.Pointer<ffi.Char>,
+              ffi.Pointer<cortext_object_callbacks>,
+              ffi.Pointer<ffi.Void>,
+            )
+          >();
+
   /// @brief Frees a Cortext instance and releases all resources.
   /// @param h Handle to the instance to free. Safe to pass NULL.
   ///
@@ -109,11 +248,12 @@ class CortextBindings {
   /// @brief Processes text input through the memory system.
   /// @param h Handle to a Cortext instance.
   /// @param text Input text string (must be non-NULL).
-  /// @param source_id Source identifier string (must be non-NULL).
+  /// @param source_id Opaque source stream identifier for provenance and exact
+  /// same-source grouping (must be non-NULL).
   /// @return 0 on success, 1 if invalid parameters, 2 on internal error.
   ///
   /// This function encodes the text and processes it through the signal
-  /// pipeline. Timestamps are generated internally in milliseconds.
+  /// pipeline as a Durable turn commit. Timestamps are generated internally in milliseconds.
   /// Any retrieved memories are buffered until cortext_flush().
   int cortext_process_text(
     cortext_handle h,
@@ -142,14 +282,52 @@ class CortextBindings {
         )
       >();
 
+  /// @brief Processes text while storing caller-provided source media bytes.
+  ///
+  /// Text remains the canonical processing input. If media is non-NULL and
+  /// media->size > 0, media->data is stored using media->mimetype instead of
+  /// the canonical UTF-8 text bytes. An empty media stores the text.
+  int cortext_process_text_with_media(
+    cortext_handle h,
+    ffi.Pointer<ffi.Char> text,
+    ffi.Pointer<ffi.Char> source_id,
+    ffi.Pointer<cortext_media> media,
+  ) {
+    return _cortext_process_text_with_media(h, text, source_id, media);
+  }
+
+  late final _cortext_process_text_with_mediaPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Int Function(
+            cortext_handle,
+            ffi.Pointer<ffi.Char>,
+            ffi.Pointer<ffi.Char>,
+            ffi.Pointer<cortext_media>,
+          )
+        >
+      >('cortext_process_text_with_media');
+  late final _cortext_process_text_with_media =
+      _cortext_process_text_with_mediaPtr
+          .asFunction<
+            int Function(
+              cortext_handle,
+              ffi.Pointer<ffi.Char>,
+              ffi.Pointer<ffi.Char>,
+              ffi.Pointer<cortext_media>,
+            )
+          >();
+
   /// @brief Processes audio input through the memory system.
   /// @param h Handle to a Cortext instance.
   /// @param pcm PCM audio samples (float32, must be non-NULL).
   /// @param num_samples Number of PCM samples.
-  /// @param source_id Source identifier string (must be non-NULL).
+  /// @param source_id Opaque source stream identifier for provenance and exact
+  /// same-source grouping (must be non-NULL).
   /// @return 0 on success, 1 if invalid parameters, 2 on internal error.
   ///
-  /// Audio must be 16kHz mono float32 PCM. Timestamps are generated internally.
+  /// Audio must be 16kHz mono float32 PCM. This is a Durable turn commit.
+  /// Timestamps are generated internally.
   /// Any retrieved memories are buffered until cortext_flush().
   int cortext_process_audio(
     cortext_handle h,
@@ -181,16 +359,63 @@ class CortextBindings {
         )
       >();
 
+  /// @brief Processes audio while storing caller-provided source media bytes.
+  ///
+  /// PCM remains 16kHz mono float32 and is used for processing. If media is
+  /// non-NULL and media->size > 0, media->data is stored using media->mimetype
+  /// instead of storing the canonical PCM buffer.
+  int cortext_process_audio_with_media(
+    cortext_handle h,
+    ffi.Pointer<ffi.Float> pcm,
+    int num_samples,
+    ffi.Pointer<ffi.Char> source_id,
+    ffi.Pointer<cortext_media> media,
+  ) {
+    return _cortext_process_audio_with_media(
+      h,
+      pcm,
+      num_samples,
+      source_id,
+      media,
+    );
+  }
+
+  late final _cortext_process_audio_with_mediaPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Int Function(
+            cortext_handle,
+            ffi.Pointer<ffi.Float>,
+            ffi.Size,
+            ffi.Pointer<ffi.Char>,
+            ffi.Pointer<cortext_media>,
+          )
+        >
+      >('cortext_process_audio_with_media');
+  late final _cortext_process_audio_with_media =
+      _cortext_process_audio_with_mediaPtr
+          .asFunction<
+            int Function(
+              cortext_handle,
+              ffi.Pointer<ffi.Float>,
+              int,
+              ffi.Pointer<ffi.Char>,
+              ffi.Pointer<cortext_media>,
+            )
+          >();
+
   /// @brief Processes image input through the memory system.
   /// @param h Handle to a Cortext instance.
   /// @param data Raw image data (RGB or RGBA, must be non-NULL).
   /// @param width Image width in pixels.
   /// @param height Image height in pixels.
   /// @param channels Number of channels (3 for RGB, 4 for RGBA).
-  /// @param source_id Source identifier string (must be non-NULL).
+  /// @param source_id Opaque source stream identifier for provenance and exact
+  /// same-source grouping (must be non-NULL).
   /// @return 0 on success, 1 if invalid parameters, 2 on internal error.
   ///
   /// Image data is expected in row-major order (height × width × channels).
+  /// This is a Durable turn commit.
   /// Timestamps are generated internally. Any retrieved memories are
   /// buffered until cortext_flush().
   int cortext_process_image(
@@ -226,6 +451,151 @@ class CortextBindings {
           int,
           int,
           ffi.Pointer<ffi.Char>,
+        )
+      >();
+
+  /// @brief Processes image pixels while storing caller-provided source media.
+  ///
+  /// Pixel data remains the canonical processing input. If media is non-NULL
+  /// and media->size > 0, media->data is stored using media->mimetype instead
+  /// of storing the canonical raw pixel buffer.
+  int cortext_process_image_with_media(
+    cortext_handle h,
+    ffi.Pointer<ffi.Uint8> data,
+    int width,
+    int height,
+    int channels,
+    ffi.Pointer<ffi.Char> source_id,
+    ffi.Pointer<cortext_media> media,
+  ) {
+    return _cortext_process_image_with_media(
+      h,
+      data,
+      width,
+      height,
+      channels,
+      source_id,
+      media,
+    );
+  }
+
+  late final _cortext_process_image_with_mediaPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Int Function(
+            cortext_handle,
+            ffi.Pointer<ffi.Uint8>,
+            ffi.Int,
+            ffi.Int,
+            ffi.Int,
+            ffi.Pointer<ffi.Char>,
+            ffi.Pointer<cortext_media>,
+          )
+        >
+      >('cortext_process_image_with_media');
+  late final _cortext_process_image_with_media =
+      _cortext_process_image_with_mediaPtr
+          .asFunction<
+            int Function(
+              cortext_handle,
+              ffi.Pointer<ffi.Uint8>,
+              int,
+              int,
+              int,
+              ffi.Pointer<ffi.Char>,
+              ffi.Pointer<cortext_media>,
+            )
+          >();
+
+  /// @brief Encodes text and returns an embedding JSON object.
+  ///
+  /// The returned JSON has shape `{ "embedding": number[], "dimension": n }`.
+  /// It is an embedding-only call: no storage, retrieval, consolidation, or
+  /// processor-state mutation occurs. Free the returned string with
+  /// cortext_string_free().
+  ffi.Pointer<ffi.Char> cortext_embed_text_json(
+    cortext_handle h,
+    ffi.Pointer<ffi.Char> text,
+  ) {
+    return _cortext_embed_text_json(h, text);
+  }
+
+  late final _cortext_embed_text_jsonPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Pointer<ffi.Char> Function(cortext_handle, ffi.Pointer<ffi.Char>)
+        >
+      >('cortext_embed_text_json');
+  late final _cortext_embed_text_json = _cortext_embed_text_jsonPtr
+      .asFunction<
+        ffi.Pointer<ffi.Char> Function(cortext_handle, ffi.Pointer<ffi.Char>)
+      >();
+
+  /// @brief Encodes audio PCM and returns an embedding JSON object.
+  ///
+  /// Audio uses the same public input contract as cortext_process_audio: 16 kHz
+  /// mono float32 PCM. Free the returned string with cortext_string_free().
+  ffi.Pointer<ffi.Char> cortext_embed_audio_json(
+    cortext_handle h,
+    ffi.Pointer<ffi.Float> pcm,
+    int num_samples,
+  ) {
+    return _cortext_embed_audio_json(h, pcm, num_samples);
+  }
+
+  late final _cortext_embed_audio_jsonPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Pointer<ffi.Char> Function(
+            cortext_handle,
+            ffi.Pointer<ffi.Float>,
+            ffi.Size,
+          )
+        >
+      >('cortext_embed_audio_json');
+  late final _cortext_embed_audio_json = _cortext_embed_audio_jsonPtr
+      .asFunction<
+        ffi.Pointer<ffi.Char> Function(
+          cortext_handle,
+          ffi.Pointer<ffi.Float>,
+          int,
+        )
+      >();
+
+  /// @brief Encodes image pixels and returns an embedding JSON object.
+  ///
+  /// Image data uses the same public input contract as cortext_process_image.
+  /// Free the returned string with cortext_string_free().
+  ffi.Pointer<ffi.Char> cortext_embed_image_json(
+    cortext_handle h,
+    ffi.Pointer<ffi.Uint8> data,
+    int width,
+    int height,
+    int channels,
+  ) {
+    return _cortext_embed_image_json(h, data, width, height, channels);
+  }
+
+  late final _cortext_embed_image_jsonPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Pointer<ffi.Char> Function(
+            cortext_handle,
+            ffi.Pointer<ffi.Uint8>,
+            ffi.Int,
+            ffi.Int,
+            ffi.Int,
+          )
+        >
+      >('cortext_embed_image_json');
+  late final _cortext_embed_image_json = _cortext_embed_image_jsonPtr
+      .asFunction<
+        ffi.Pointer<ffi.Char> Function(
+          cortext_handle,
+          ffi.Pointer<ffi.Uint8>,
+          int,
+          int,
+          int,
         )
       >();
 
@@ -352,12 +722,7 @@ class CortextBindings {
     ffi.Pointer<ffi.Char> source_id,
     ffi.Pointer<cortext_process_json_options> options,
   ) {
-    return _cortext_process_text_json_with_options(
-      h,
-      text,
-      source_id,
-      options,
-    );
+    return _cortext_process_text_json_with_options(h, text, source_id, options);
   }
 
   late final _cortext_process_text_json_with_optionsPtr =
@@ -378,6 +743,80 @@ class CortextBindings {
               cortext_handle,
               ffi.Pointer<ffi.Char>,
               ffi.Pointer<ffi.Char>,
+              ffi.Pointer<cortext_process_json_options>,
+            )
+          >();
+
+  /// @brief Processes text with source media and returns Context JSON.
+  ffi.Pointer<ffi.Char> cortext_process_text_with_media_json(
+    cortext_handle h,
+    ffi.Pointer<ffi.Char> text,
+    ffi.Pointer<ffi.Char> source_id,
+    ffi.Pointer<cortext_media> media,
+  ) {
+    return _cortext_process_text_with_media_json(h, text, source_id, media);
+  }
+
+  late final _cortext_process_text_with_media_jsonPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Pointer<ffi.Char> Function(
+            cortext_handle,
+            ffi.Pointer<ffi.Char>,
+            ffi.Pointer<ffi.Char>,
+            ffi.Pointer<cortext_media>,
+          )
+        >
+      >('cortext_process_text_with_media_json');
+  late final _cortext_process_text_with_media_json =
+      _cortext_process_text_with_media_jsonPtr
+          .asFunction<
+            ffi.Pointer<ffi.Char> Function(
+              cortext_handle,
+              ffi.Pointer<ffi.Char>,
+              ffi.Pointer<ffi.Char>,
+              ffi.Pointer<cortext_media>,
+            )
+          >();
+
+  /// @brief Processes text with source media and returns configurable Context
+  /// JSON.
+  ffi.Pointer<ffi.Char> cortext_process_text_with_media_json_with_options(
+    cortext_handle h,
+    ffi.Pointer<ffi.Char> text,
+    ffi.Pointer<ffi.Char> source_id,
+    ffi.Pointer<cortext_media> media,
+    ffi.Pointer<cortext_process_json_options> options,
+  ) {
+    return _cortext_process_text_with_media_json_with_options(
+      h,
+      text,
+      source_id,
+      media,
+      options,
+    );
+  }
+
+  late final _cortext_process_text_with_media_json_with_optionsPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Pointer<ffi.Char> Function(
+            cortext_handle,
+            ffi.Pointer<ffi.Char>,
+            ffi.Pointer<ffi.Char>,
+            ffi.Pointer<cortext_media>,
+            ffi.Pointer<cortext_process_json_options>,
+          )
+        >
+      >('cortext_process_text_with_media_json_with_options');
+  late final _cortext_process_text_with_media_json_with_options =
+      _cortext_process_text_with_media_json_with_optionsPtr
+          .asFunction<
+            ffi.Pointer<ffi.Char> Function(
+              cortext_handle,
+              ffi.Pointer<ffi.Char>,
+              ffi.Pointer<ffi.Char>,
+              ffi.Pointer<cortext_media>,
               ffi.Pointer<cortext_process_json_options>,
             )
           >();
@@ -737,90 +1176,6 @@ class CortextBindings {
             )
           >();
 
-  /// @brief Encodes text and returns an embedding JSON object.
-  ffi.Pointer<ffi.Char> cortext_embed_text_json(
-    cortext_handle h,
-    ffi.Pointer<ffi.Char> text,
-  ) {
-    return _cortext_embed_text_json(h, text);
-  }
-
-  late final _cortext_embed_text_jsonPtr =
-      _lookup<
-        ffi.NativeFunction<
-          ffi.Pointer<ffi.Char> Function(
-            cortext_handle,
-            ffi.Pointer<ffi.Char>,
-          )
-        >
-      >('cortext_embed_text_json');
-  late final _cortext_embed_text_json = _cortext_embed_text_jsonPtr
-      .asFunction<
-        ffi.Pointer<ffi.Char> Function(cortext_handle, ffi.Pointer<ffi.Char>)
-      >();
-
-  /// @brief Encodes audio PCM and returns an embedding JSON object.
-  ffi.Pointer<ffi.Char> cortext_embed_audio_json(
-    cortext_handle h,
-    ffi.Pointer<ffi.Float> pcm,
-    int num_samples,
-  ) {
-    return _cortext_embed_audio_json(h, pcm, num_samples);
-  }
-
-  late final _cortext_embed_audio_jsonPtr =
-      _lookup<
-        ffi.NativeFunction<
-          ffi.Pointer<ffi.Char> Function(
-            cortext_handle,
-            ffi.Pointer<ffi.Float>,
-            ffi.Size,
-          )
-        >
-      >('cortext_embed_audio_json');
-  late final _cortext_embed_audio_json = _cortext_embed_audio_jsonPtr
-      .asFunction<
-        ffi.Pointer<ffi.Char> Function(
-          cortext_handle,
-          ffi.Pointer<ffi.Float>,
-          int,
-        )
-      >();
-
-  /// @brief Encodes image pixels and returns an embedding JSON object.
-  ffi.Pointer<ffi.Char> cortext_embed_image_json(
-    cortext_handle h,
-    ffi.Pointer<ffi.Uint8> data,
-    int width,
-    int height,
-    int channels,
-  ) {
-    return _cortext_embed_image_json(h, data, width, height, channels);
-  }
-
-  late final _cortext_embed_image_jsonPtr =
-      _lookup<
-        ffi.NativeFunction<
-          ffi.Pointer<ffi.Char> Function(
-            cortext_handle,
-            ffi.Pointer<ffi.Uint8>,
-            ffi.Int,
-            ffi.Int,
-            ffi.Int,
-          )
-        >
-      >('cortext_embed_image_json');
-  late final _cortext_embed_image_json = _cortext_embed_image_jsonPtr
-      .asFunction<
-        ffi.Pointer<ffi.Char> Function(
-          cortext_handle,
-          ffi.Pointer<ffi.Uint8>,
-          int,
-          int,
-          int,
-        )
-      >();
-
   /// @brief Runs shallow consolidation and returns the resulting Context as JSON.
   ffi.Pointer<ffi.Char> cortext_consolidate_json(cortext_handle h) {
     return _cortext_consolidate_json(h);
@@ -832,13 +1187,248 @@ class CortextBindings {
       >('cortext_consolidate_json');
   late final _cortext_consolidate_json = _cortext_consolidate_jsonPtr
       .asFunction<ffi.Pointer<ffi.Char> Function(cortext_handle)>();
-
 }
 
 /// @brief Opaque handle to a Cortext instance.
 ///
 /// This handle must be freed with cortext_free() when no longer needed.
 typedef cortext_handle = ffi.Pointer<ffi.Void>;
+
+/// @brief Typed SQL value passed between Cortext and external DB providers.
+final class cortext_db_value extends ffi.Struct {
+  @ffi.Int()
+  external int type;
+
+  @ffi.Int64()
+  external int int64_value;
+
+  @ffi.Double()
+  external double double_value;
+
+  external ffi.Pointer<ffi.Char> text_value;
+
+  external ffi.Pointer<ffi.Uint8> blob_data;
+
+  @ffi.Size()
+  external int blob_size;
+}
+
+/// @brief One named result cell returned by external DB providers.
+final class cortext_db_cell extends ffi.Struct {
+  external ffi.Pointer<ffi.Char> column_name;
+
+  external cortext_db_value value;
+}
+
+/// @brief One result row returned by external DB providers.
+final class cortext_db_row extends ffi.Struct {
+  external ffi.Pointer<cortext_db_cell> cells;
+
+  @ffi.Size()
+  external int cell_count;
+}
+
+/// @brief Full result set returned by external DB providers.
+final class cortext_db_result extends ffi.Struct {
+  external ffi.Pointer<cortext_db_row> rows;
+
+  @ffi.Size()
+  external int row_count;
+}
+
+/// @brief Synchronous SQL callback table for externally owned DB providers.
+final class cortext_db_callbacks extends ffi.Struct {
+  @ffi.Size()
+  external int struct_size;
+
+  external ffi.Pointer<
+    ffi.NativeFunction<
+      ffi.Int Function(
+        ffi.Pointer<ffi.Void> user_data,
+        ffi.Pointer<ffi.Void> transaction,
+        ffi.Pointer<ffi.Char> query,
+        ffi.Pointer<cortext_db_value> params,
+        ffi.Size param_count,
+        ffi.Pointer<cortext_db_result> out_result,
+        ffi.Pointer<ffi.Pointer<ffi.Char>> out_error,
+      )
+    >
+  >
+  execute;
+
+  external ffi.Pointer<
+    ffi.NativeFunction<
+      ffi.Int Function(
+        ffi.Pointer<ffi.Void> user_data,
+        ffi.Pointer<ffi.Void> parent_transaction,
+        ffi.Pointer<ffi.Pointer<ffi.Void>> out_transaction,
+        ffi.Pointer<ffi.Pointer<ffi.Char>> out_error,
+      )
+    >
+  >
+  begin;
+
+  external ffi.Pointer<
+    ffi.NativeFunction<
+      ffi.Int Function(
+        ffi.Pointer<ffi.Void> user_data,
+        ffi.Pointer<ffi.Void> transaction,
+        ffi.Pointer<ffi.Pointer<ffi.Char>> out_error,
+      )
+    >
+  >
+  commit;
+
+  external ffi.Pointer<
+    ffi.NativeFunction<
+      ffi.Int Function(
+        ffi.Pointer<ffi.Void> user_data,
+        ffi.Pointer<ffi.Void> transaction,
+        ffi.Pointer<ffi.Pointer<ffi.Char>> out_error,
+      )
+    >
+  >
+  rollback;
+
+  external ffi.Pointer<
+    ffi.NativeFunction<
+      ffi.Void Function(
+        ffi.Pointer<ffi.Void> user_data,
+        ffi.Pointer<ffi.Void> transaction,
+      )
+    >
+  >
+  release_transaction;
+
+  external ffi.Pointer<
+    ffi.NativeFunction<
+      ffi.Void Function(
+        ffi.Pointer<ffi.Void> user_data,
+        ffi.Pointer<cortext_db_result> result,
+      )
+    >
+  >
+  release_result;
+}
+
+/// @brief Synchronous object storage callback table for external providers.
+final class cortext_object_callbacks extends ffi.Struct {
+  @ffi.Size()
+  external int struct_size;
+
+  external ffi.Pointer<
+    ffi.NativeFunction<
+      ffi.Int Function(
+        ffi.Pointer<ffi.Void> user_data,
+        ffi.Pointer<ffi.Void> parent_transaction,
+        ffi.Pointer<ffi.Pointer<ffi.Void>> out_transaction,
+        ffi.Pointer<ffi.Pointer<ffi.Char>> out_error,
+      )
+    >
+  >
+  begin;
+
+  external ffi.Pointer<
+    ffi.NativeFunction<
+      ffi.Int Function(
+        ffi.Pointer<ffi.Void> user_data,
+        ffi.Pointer<ffi.Void> transaction,
+        ffi.Pointer<ffi.Uint8> id,
+        ffi.Size id_size,
+        ffi.Pointer<ffi.Uint8> data,
+        ffi.Size data_size,
+        ffi.Pointer<ffi.Pointer<ffi.Char>> out_error,
+      )
+    >
+  >
+  put;
+
+  external ffi.Pointer<
+    ffi.NativeFunction<
+      ffi.Int Function(
+        ffi.Pointer<ffi.Void> user_data,
+        ffi.Pointer<ffi.Void> transaction,
+        ffi.Pointer<ffi.Uint8> id,
+        ffi.Size id_size,
+        ffi.Pointer<ffi.Pointer<ffi.Uint8>> out_data,
+        ffi.Pointer<ffi.Size> out_data_size,
+        ffi.Pointer<ffi.Pointer<ffi.Char>> out_error,
+      )
+    >
+  >
+  get$;
+
+  external ffi.Pointer<
+    ffi.NativeFunction<
+      ffi.Int Function(
+        ffi.Pointer<ffi.Void> user_data,
+        ffi.Pointer<ffi.Void> transaction,
+        ffi.Pointer<ffi.Uint8> id,
+        ffi.Size id_size,
+        ffi.Pointer<ffi.Int> out_exists,
+        ffi.Pointer<ffi.Pointer<ffi.Char>> out_error,
+      )
+    >
+  >
+  exists;
+
+  external ffi.Pointer<
+    ffi.NativeFunction<
+      ffi.Int Function(
+        ffi.Pointer<ffi.Void> user_data,
+        ffi.Pointer<ffi.Void> transaction,
+        ffi.Pointer<ffi.Uint8> id,
+        ffi.Size id_size,
+        ffi.Pointer<ffi.Int> out_deleted,
+        ffi.Pointer<ffi.Pointer<ffi.Char>> out_error,
+      )
+    >
+  >
+  delete_object;
+
+  external ffi.Pointer<
+    ffi.NativeFunction<
+      ffi.Int Function(
+        ffi.Pointer<ffi.Void> user_data,
+        ffi.Pointer<ffi.Void> transaction,
+        ffi.Pointer<ffi.Pointer<ffi.Char>> out_error,
+      )
+    >
+  >
+  commit;
+
+  external ffi.Pointer<
+    ffi.NativeFunction<
+      ffi.Int Function(
+        ffi.Pointer<ffi.Void> user_data,
+        ffi.Pointer<ffi.Void> transaction,
+        ffi.Pointer<ffi.Pointer<ffi.Char>> out_error,
+      )
+    >
+  >
+  rollback;
+
+  external ffi.Pointer<
+    ffi.NativeFunction<
+      ffi.Void Function(
+        ffi.Pointer<ffi.Void> user_data,
+        ffi.Pointer<ffi.Void> transaction,
+      )
+    >
+  >
+  release_transaction;
+
+  external ffi.Pointer<
+    ffi.NativeFunction<
+      ffi.Void Function(
+        ffi.Pointer<ffi.Void> user_data,
+        ffi.Pointer<ffi.Uint8> data,
+        ffi.Size data_size,
+      )
+    >
+  >
+  release_blob;
+}
 
 /// @brief Binding-friendly configuration for cortext_create_with_config.
 final class cortext_config extends ffi.Struct {
@@ -864,9 +1454,6 @@ final class cortext_config extends ffi.Struct {
   external int reinforcement_enabled;
 
   @ffi.Int()
-  external int procedural_enabled;
-
-  @ffi.Int()
   external int sequential_edges_enabled;
 
   @ffi.Int()
@@ -879,7 +1466,17 @@ final class cortext_config extends ffi.Struct {
   external int signal_filter_text_enabled;
 }
 
-/// @brief Optional source media payload persisted for audio/image signals.
+/// @brief Optional source media payload persisted for a processed signal.
+///
+/// The canonical process input is still passed through text/pcm/data
+/// arguments and is what the signal is encoded from. When this struct
+/// carries bytes, those bytes are stored as the durable signal/memory
+/// payload using mimetype. NULL or size == 0 stores the canonical input
+/// (UTF-8 text, f32le PCM, or raw pixels), exactly like the process
+/// functions without media. A payload is used as text (keyword index,
+/// standing memories, working-memory text, packet text) only when its
+/// mimetype is text/*; any other mimetype is an opaque payload for every
+/// modality. Media bytes are copied during the call.
 final class cortext_media extends ffi.Struct {
   external ffi.Pointer<ffi.Uint8> data;
 
@@ -890,6 +1487,31 @@ final class cortext_media extends ffi.Struct {
 }
 
 /// @brief Options for JSON process result payloads.
+///
+/// Existing JSON process calls include the processed signal embedding by
+/// default. Pass include_embedding = 0 through the _with_options variants to
+/// omit that vector from the returned JSON payload.
+///
+/// retention defaults to CORTEXT_RETENTION_NATURAL. Older clients that only
+/// set struct_size + include_embedding keep Natural (false/false forces).
+///
+/// evidence_budget_bytes is the per-call evidence budget
+/// (cortext::Cortext::EvidenceBudget): 0 (the default) returns every
+/// recalled memory whole; a positive value fits standing_memory plus
+/// retrieved_memory (with attached neighbours) within that many bytes,
+/// text charged by its UTF-8 bytes and every other payload as
+/// CORTEXT_MEDIA_EVIDENCE_BYTES. A reader budgeted in tokens converts with
+/// its tokenizer's rate (8,000 tokens at 4.35 characters per token is
+/// 34,800 bytes of ASCII text).
+///
+/// has_reference_ms, as_of and reference_ms are the per-call query
+/// reference time (cortext::Cortext::RetrievalTime), read only when
+/// struct_size covers reference_ms. has_reference_ms = 0 (the default)
+/// leaves retrieval unchanged. Nonzero: reference_ms (ms since the Unix
+/// epoch, past or future) adds the long-term memories nearest that time as
+/// retrieval candidates, and nonzero as_of additionally hides memories that
+/// start after reference_ms. Only CORTEXT_RETENTION_EPHEMERAL calls read
+/// them.
 final class cortext_process_json_options extends ffi.Struct {
   @ffi.Size()
   external int struct_size;
@@ -897,9 +1519,27 @@ final class cortext_process_json_options extends ffi.Struct {
   @ffi.Int()
   external int include_embedding;
 
+  /// < cortext_retention; Natural when field absent/unknown
   @ffi.Int()
   external int retention;
 
+  /// < Must be zero; distinguishes this layout from v1.1.10.
   @ffi.Int()
   external int reserved;
+
+  /// < 0 = unset; read when struct_size covers it
+  @ffi.Size()
+  external int evidence_budget_bytes;
+
+  /// < nonzero: reference_ms is set
+  @ffi.Int()
+  external int has_reference_ms;
+
+  /// < nonzero: as-of cutoff at reference_ms
+  @ffi.Int()
+  external int as_of;
+
+  /// < query reference time, ms since the Unix epoch
+  @ffi.Uint64()
+  external int reference_ms;
 }

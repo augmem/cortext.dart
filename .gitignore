@@ -26,6 +26,8 @@ doc/api/
 /models/
 **/AIST-87M-GGUF/AIST-87M_q8_0.gguf
 **/AIST-87M-GGUF/AIST-87M_q5_1.gguf
+**/AIST-87M-GGUF/AIST-87M-LI.gguf
+*.gguf
 
 # Coverage
 coverage/
